@@ -1,0 +1,16 @@
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/appsettings.Development.json
+
+# Frontend
+travel-planner-frontend/node_modules/
+travel-planner-frontend/dist/
+
+# Environment
+travel-planner-frontend/.env
+
+# VS
+.vs/
+*.suo
