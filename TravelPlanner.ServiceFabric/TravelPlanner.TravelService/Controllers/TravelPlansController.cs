@@ -1,8 +1,8 @@
 using System.Security.Claims;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 using TravelPlanner.TravelService.Data;
 using TravelPlanner.TravelService.DTOs;
 using TravelPlanner.TravelService.Services;
@@ -18,7 +18,8 @@ public class TravelPlansController : ControllerBase
     private readonly TravelDbContext _context;
     private readonly IMapper _mapper;
 
-    public TravelPlansController(TravelPlanService service, TravelDbContext context, IMapper mapper)
+    public TravelPlansController(TravelPlanService service,
+        TravelDbContext context, IMapper mapper)
     {
         _service = service;
         _context = context;
@@ -27,6 +28,9 @@ public class TravelPlansController : ControllerBase
 
     private Guid GetUserId() =>
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    private bool IsAdmin() =>
+        User.IsInRole("admin");
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -38,9 +42,17 @@ public class TravelPlansController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var plan = await _service.GetByIdAsync(id, GetUserId());
-        if (plan == null) return NotFound();
-        return Ok(plan);
+        // Admin može vidjeti bilo koji plan
+        if (IsAdmin())
+        {
+            var plan = await _context.TravelPlans.FindAsync(id);
+            if (plan == null) return NotFound();
+            return Ok(_mapper.Map<TravelPlanDto>(plan));
+        }
+
+        var result = await _service.GetByIdAsync(id, GetUserId());
+        if (result == null) return NotFound();
+        return Ok(result);
     }
 
     [HttpPost]
@@ -68,13 +80,32 @@ public class TravelPlansController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
+        // Admin može obrisati bilo koji plan
+        if (IsAdmin())
+        {
+            var plan = await _context.TravelPlans.FindAsync(id);
+            if (plan == null) return NotFound();
+
+            _context.TravelPlans.Remove(plan);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         var success = await _service.DeleteAsync(id, GetUserId());
         if (!success) return NotFound();
 
         return NoContent();
     }
 
-    // samo za interne pozive
+    [HttpGet("all")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> GetAllPlans()
+    {
+        var plans = await _context.TravelPlans.ToListAsync();
+        return Ok(_mapper.Map<List<TravelPlanDto>>(plans));
+    }
+
+    // Interni endpoint — planovi po userId (koristi UsersController za brisanje)
     [HttpGet("by-user/{userId}")]
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> GetByUserId(Guid userId)
