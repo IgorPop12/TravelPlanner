@@ -17,7 +17,9 @@ export default function ActivityCard({ activity, onDelete }) {
         {activity.estimatedCost > 0 && <p style={styles.cost}>Trošak: €{activity.estimatedCost}</p>}
         {activity.description && <p style={styles.desc}>{activity.description}</p>}
       </div>
+      {onDelete && (
       <button onClick={() => onDelete(activity.id)} style={styles.deleteBtn}>Obriši</button>
+      )}
     </div>
   );
 }

@@ -21,6 +21,9 @@ public class ActivitiesController : ControllerBase
     private Guid GetUserId() =>
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+    private string GetAuthToken() =>
+        Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+
     [HttpGet]
     public async Task<IActionResult> GetAll(Guid planId)
     {
@@ -34,7 +37,7 @@ public class ActivitiesController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        var (result, error) = await _service.CreateAsync(planId, dto, GetUserId());
+        var (result, error) = await _service.CreateAsync(planId, dto, GetUserId(), GetAuthToken());
         if (error != null) return BadRequest(new { message = error });
 
         return Ok(result);

@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using TravelPlanner.ExpenseService.Data;
@@ -107,6 +108,28 @@ public class ExpenseService
                 .Select(g => new CategoryBreakdownDto { Category = g.Key, Total = g.Sum(e => e.Amount) })
                 .ToList()
         };
+    }
+
+    public async Task<bool> PlanBelongsToUser(Guid planId, string authToken)
+    {
+        var travelServiceUrl = _config["Services:TravelServiceUrl"];
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", authToken);
+
+        var response = await _httpClient.GetAsync(
+            $"{travelServiceUrl}/api/travel-plans/{planId}");
+
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task DeleteAllForPlanAsync(Guid planId)
+    {
+        var expenses = await _context.Expenses
+            .Where(e => e.PlanId == planId)
+            .ToListAsync();
+
+        _context.Expenses.RemoveRange(expenses);
+        await _context.SaveChangesAsync();
     }
 
     private class TravelPlanResponse

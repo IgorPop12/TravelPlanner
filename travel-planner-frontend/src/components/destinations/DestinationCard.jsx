@@ -8,7 +8,9 @@ export default function DestinationCard({ destination, onDelete }) {
         <p style={styles.dates}>{fmt(destination.arrivalDate)} — {fmt(destination.departureDate)}</p>
         {destination.description && <p style={styles.desc}>{destination.description}</p>}
       </div>
+      {onDelete && (
       <button onClick={() => onDelete(destination.id)} style={styles.deleteBtn}>Obriši</button>
+      )}
     </div>
   );
 }

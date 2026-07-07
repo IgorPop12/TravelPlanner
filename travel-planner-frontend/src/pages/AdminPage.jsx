@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/common/Navbar';
+import { userService } from '../services/userService';
 
 const BASE = import.meta.env.VITE_API_USER_URL;
 
@@ -18,31 +19,25 @@ export default function AdminPage() {
   }, []);
 
   const loadUsers = async () => {
-    try {
-      const res = await fetch(`${BASE}/api/users`, { headers: authHeaders() });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setUsers(data);
-    } catch {
-      setError('Greška pri učitavanju korisnika.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const data = await userService.getAll();
+    setUsers(data);
+  } catch {
+    setError('Greška pri učitavanju korisnika.');
+  } finally {
+    setLoading(false);
+  }
+ };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Obrisati korisnika?')) return;
-    try {
-      const res = await fetch(`${BASE}/api/users/${id}`, {
-        method: 'DELETE',
-        headers: authHeaders()
-      });
-      if (!res.ok) throw new Error();
-      loadUsers();
-    } catch {
-      alert('Greška pri brisanju korisnika.');
-    }
-  };
+  if (!window.confirm('Obrisati korisnika?')) return;
+  try {
+    await userService.delete(id);
+    loadUsers();
+  } catch {
+    alert('Greška pri brisanju korisnika.');
+  }
+ };
 
   const formatDate = (d) => new Date(d).toLocaleDateString('sr-RS');
 

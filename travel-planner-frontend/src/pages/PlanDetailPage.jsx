@@ -35,6 +35,7 @@ export default function PlanDetailPage() {
   const [showExpForm, setShowExpForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showShare, setShowShare] = useState(false);
+  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => {
     loadAll();
@@ -208,17 +209,29 @@ export default function PlanDetailPage() {
           <div style={styles.section}>
             <div style={styles.sectionHeader}>
               <h2>Aktivnosti</h2>
-              <button onClick={() => setShowActForm(true)} style={styles.addBtn}>+ Dodaj</button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+                  style={styles.editBtn}
+                >
+                  {viewMode === 'list' ? 'Kalendar' : 'Lista'}
+                </button>
+                <button onClick={() => setShowActForm(true)} style={styles.addBtn}>+ Dodaj</button>
+              </div>
             </div>
             {showActForm && (
               <ActivityForm onSubmit={handleAddActivity} onCancel={() => setShowActForm(false)} destinations={destinations} />
             )}
-            {activities.length === 0 ? (
-              <p style={styles.empty}>Još nema aktivnosti.</p>
+            {viewMode === 'calendar' ? (
+              <CalendarView activities={activities} />
             ) : (
-              activities.map(a => (
-                <ActivityCard key={a.id} activity={a} onDelete={handleDeleteActivity} />
-              ))
+              activities.length === 0 ? (
+                <p style={styles.empty}>Još nema aktivnosti.</p>
+              ) : (
+                activities.map(a => (
+                  <ActivityCard key={a.id} activity={a} onDelete={handleDeleteActivity} />
+                ))
+              )
             )}
           </div>
         )}

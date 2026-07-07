@@ -37,6 +37,7 @@ public static class ServiceExtensions
         builder.Services.AddScoped<ActivityService>();
         builder.Services.AddScoped<ChecklistService>();
         builder.Services.AddHttpClient();
+        builder.Services.AddHttpClient<ActivityService>();
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>

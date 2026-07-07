@@ -1,6 +1,9 @@
 using System.Security.Claims;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TravelPlanner.TravelService.Data;
 using TravelPlanner.TravelService.DTOs;
 using TravelPlanner.TravelService.Services;
 
@@ -12,10 +15,14 @@ namespace TravelPlanner.TravelService.Controllers;
 public class TravelPlansController : ControllerBase
 {
     private readonly TravelPlanService _service;
+    private readonly TravelDbContext _context;
+    private readonly IMapper _mapper;
 
-    public TravelPlansController(TravelPlanService service)
+    public TravelPlansController(TravelPlanService service, TravelDbContext context, IMapper mapper)
     {
         _service = service;
+        _context = context;
+        _mapper = mapper;
     }
 
     private Guid GetUserId() =>
@@ -65,5 +72,17 @@ public class TravelPlansController : ControllerBase
         if (!success) return NotFound();
 
         return NoContent();
+    }
+
+    // samo za interne pozive
+    [HttpGet("by-user/{userId}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> GetByUserId(Guid userId)
+    {
+        var plans = await _context.TravelPlans
+            .Where(p => p.UserId == userId)
+            .ToListAsync();
+
+        return Ok(_mapper.Map<List<TravelPlanDto>>(plans));
     }
 }

@@ -35,6 +35,7 @@ public static class ServiceExtensions
         builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<ShareTokenService>();
         builder.Services.AddControllers();
+        builder.Services.AddHttpClient();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {

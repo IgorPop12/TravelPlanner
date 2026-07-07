@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using TravelPlanner.TravelService.Data;
 using TravelPlanner.TravelService.DTOs;
 using TravelPlanner.TravelService.Models;
+using System.Text.Json;
+using System.Text;
+using System.Net.Http.Headers;
 
 namespace TravelPlanner.TravelService.Services;
 
@@ -10,11 +13,16 @@ public class ActivityService
 {
     private readonly TravelDbContext _context;
     private readonly IMapper _mapper;
+    private readonly HttpClient _httpClient;
+    private readonly IConfiguration _config;
 
-    public ActivityService(TravelDbContext context, IMapper mapper)
+    public ActivityService(TravelDbContext context, IMapper mapper,
+        HttpClient httpClient, IConfiguration config)
     {
         _context = context;
         _mapper = mapper;
+        _httpClient = httpClient;
+        _config = config;
     }
 
     private async Task<bool> PlanBelongsToUser(Guid planId, Guid userId) =>
@@ -33,7 +41,7 @@ public class ActivityService
     }
 
     public async Task<(ActivityDto? Result, string? Error)> CreateAsync(
-        Guid planId, CreateActivityDto dto, Guid userId)
+        Guid planId, CreateActivityDto dto, Guid userId, string authToken)
     {
         if (!await PlanBelongsToUser(planId, userId))
             return (null, "Plan nije pronađen.");
@@ -55,7 +63,42 @@ public class ActivityService
         _context.Activities.Add(activity);
         await _context.SaveChangesAsync();
 
+        // Ako aktivnost ima procijenjeni trošak, dodaj ga automatski u ExpenseService
+        if (dto.EstimatedCost > 0)
+        {
+            await CreateExpenseFromActivity(planId, activity, authToken);
+        }
+
         return (_mapper.Map<ActivityDto>(activity), null);
+    }
+
+    private async Task CreateExpenseFromActivity(Guid planId, Activity activity, string authToken)
+    {
+        try
+        {
+            var expenseServiceUrl = _config["Services:ExpenseServiceUrl"];
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", authToken);
+
+            var expense = new
+            {
+                name = $"Aktivnost: {activity.Name}",
+                category = "other",
+                amount = activity.EstimatedCost,
+                date = activity.Date.ToString("yyyy-MM-dd"),
+                description = $"Automatski dodan trošak za aktivnost: {activity.Name}"
+            };
+
+            var body = JsonSerializer.Serialize(expense);
+            var content = new StringContent(body, Encoding.UTF8, "application/json");
+
+            await _httpClient.PostAsync(
+                $"{expenseServiceUrl}/api/travel-plans/{planId}/expenses", content);
+        }
+        catch
+        {
+            // Ne blokiramo kreiranje aktivnosti ako ExpenseService nije dostupan
+        }
     }
 
     public async Task<(bool Success, string? Error)> UpdateAsync(
