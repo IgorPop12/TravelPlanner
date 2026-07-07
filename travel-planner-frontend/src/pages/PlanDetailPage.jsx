@@ -16,6 +16,7 @@ import { activityService } from '../services/activityService';
 import { expenseService } from '../services/expenseService';
 import { checklistService } from '../services/checklistService';
 import ShareModal from '../components/share/ShareModal';
+import { pdfService } from '../services/pdfService';
 
 const TABS = ['Pregled', 'Destinacije', 'Aktivnosti', 'Troškovi', 'Checklist'];
 
@@ -136,6 +137,12 @@ export default function PlanDetailPage() {
           </div>
           <button onClick={() => setShowEditPlan(true)} style={styles.editBtn}>Uredi plan</button>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => pdfService.generatePlanReport(plan, destinations, activities, expenses, checklist)}
+              style={styles.pdfBtn}
+            >
+              PDF izvještaj
+            </button>
             <button onClick={() => setShowShare(true)} style={styles.shareBtn}>🔗 Podijeli</button>
             <button onClick={() => setShowEditPlan(true)} style={styles.editBtn}>Uredi plan</button>
           </div>
@@ -268,5 +275,6 @@ const styles = {
   infoGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' },
   infoCard: { backgroundColor: '#f9fafb', borderRadius: '8px', padding: '1rem' },
   empty: { color: '#6b7280', textAlign: 'center', padding: '2rem' },
-  shareBtn: { padding: '0.5rem 1rem', backgroundColor: '#059669', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }
+  shareBtn: { padding: '0.5rem 1rem', backgroundColor: '#059669', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' },
+  pdfBtn: { padding: '0.5rem 1rem', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }
 };
